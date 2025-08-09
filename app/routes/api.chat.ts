@@ -1,6 +1,8 @@
 import type { Route } from "./+types/api.chat";
 import type { ChatRequest, ChatResponse } from "../lib/chat/types";
 
+const chatContext: { role: string; content: string; }[] = []
+
 export async function action({ request }: Route.ActionArgs) {
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
@@ -33,6 +35,7 @@ export async function action({ request }: Route.ActionArgs) {
       };
       return Response.json(mock);
     }
+    chatContext.push({ role: "user", content: message });
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -41,12 +44,13 @@ export async function action({ request }: Route.ActionArgs) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-5",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
           { role: "user", content: message },
+          ...chatContext,
         ],
-        temperature: 0.7,
+        //temperature: 0.7,
       }),
     });
 

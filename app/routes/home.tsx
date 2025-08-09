@@ -1,7 +1,8 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatResponse } from "../lib/chat/types";
+import { LeftPanel } from "../components/LeftPanel";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -44,6 +45,11 @@ export default function Home() {
       { method: "post", action: "/api/chat", encType: "application/json" }
     );
 
+    fetcher.submit(
+      { count: 100 },
+      { method: "get", action: "/api/products", encType: "application/json" }
+    );
+
     setTimeout(() => {
       if (inputRef.current) {
         inputRef.current.value = "";
@@ -52,43 +58,15 @@ export default function Home() {
     }, 0);
   };
 
-  const heroPoints = useMemo(
-    () => [
-      "Fast, server-secure API calls",
-      "Beautiful Tailwind UI",
-      "React Router Full-Stack",
-    ],
-    []
-  );
-
   const errorMessage = (fetcher.data as ChatResponse | undefined)?.error;
 
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="flex flex-col justify-center gap-6">
-          <div className="space-y-3">
-            <h1 className="text-4xl font-semibold tracking-tight">Envive</h1>
-            <p className="text-gray-600 dark:text-gray-300 text-lg">
-              Build with AI. Secure server actions, modern React, and a
-              clean developer experience.
-            </p>
-          </div>
-          <ul className="space-y-2">
-            {heroPoints.map((point) => (
-              <li
-                key={point}
-                className="flex items-center gap-3 text-gray-700 dark:text-gray-200"
-              >
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs">✓</span>
-                {point}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <LeftPanel />
 
         <section className="lg:pl-4">
-          <div className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
+          <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
             <div className="p-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="font-medium">Chatbot</h2>
             </div>
