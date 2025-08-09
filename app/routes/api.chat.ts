@@ -70,12 +70,12 @@ export async function action({ request }: Route.ActionArgs) {
           { role: "system", content: "You are a helpful assistant." },
           { role: "system", content: JSON.stringify(catalog) },
           { role: "system", content: "When a user asks for a product, only returns products that are in the catalog." },
-          { role: "system", content: "Always respond in two seperate messages. The first message should be the response to the user's message. Then add a line break \"\n--products--\n\" and then the list of products in a stringified JSON array that i can parse." },
           { role: "system", content: "Always wrap the products json in a json object with the key \"products\"." },
           { role: "system", content: "Always keep the reply short and concise. Do not add any other text or comments." },
           { role: "system", content: "Always only return the products that are in the catalog. Do not make up products." },
           { role: "system", content: "Outfit creations should only include products that are in the catalog." },
           { role: "system", content: "Always return the products when making an outfit." },
+          { role: "system", content: "Always respond in json format. The json should have a key \"products\" and the value should be an array of products.,and another key \"reply\" and the value should be the reply to the user's message." },
           ...chatContext,
           { role: "user", content: message },
         ],
@@ -93,15 +93,13 @@ export async function action({ request }: Route.ActionArgs) {
 
 
     const data = await response.json();
-    let reply: string | undefined = data?.choices?.[0]?.message?.content;
+    let res: string | undefined = data?.choices?.[0]?.message?.content;
 
-    console.log(reply);
-
-    const products = reply?.split("\n--products--\n")[1];
-    const productsJson = products ? JSON.parse(products) : [];  
-    console.log(productsJson);
-    const productsArray = productsJson.products as CatalogProduct[];
-    reply = reply?.split("--products--")[0];
+    const parsedRes = JSON.parse(res ?? "{}");
+    const products = parsedRes.products;
+    const reply = parsedRes.reply;
+    console.log(products);
+    const productsArray = products as CatalogProduct[];
 
     const result: ChatResponse = {
       reply: reply ?? "No content returned.",

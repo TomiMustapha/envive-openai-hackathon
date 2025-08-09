@@ -5,6 +5,7 @@ import { useProducts } from "~/routes/page";
 
 export function BundleView() {
   const { products } = useProducts();
+  console.log(products);
   return (
     <div className="w-full">
     {products.length === 0 || products === undefined ? (
