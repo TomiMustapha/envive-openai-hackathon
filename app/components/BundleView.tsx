@@ -3,8 +3,7 @@ import type { CatalogProduct } from "../lib/products/types";
 import { useProducts } from "~/routes/page";
 
 
-export function BundleView() {
-  const { products } = useProducts();
+export function BundleView({ products }: { products: CatalogProduct[] }) {
   console.log(products);
   return (
     <div className="w-full">

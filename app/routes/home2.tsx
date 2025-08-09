@@ -77,7 +77,7 @@ export default function Home() {
     <main className="min-h-[100dvh] p-6">
       {
         products.length > 0 && (
-          <BottomPanel />
+          <BottomPanel products={products} />
         )
       }
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">

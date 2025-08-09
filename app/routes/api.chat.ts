@@ -4,7 +4,7 @@ import { generateCatalog } from "../lib/products/generate";
 import type { CatalogProduct } from "~/lib/products/types";
 
 const chatContext: { role: string; content: string }[] = [];
-const catalog = generateCatalog(500);
+const catalog = generateCatalog(100);
 
 function maybeExtractCount(message: string): number | null {
   const match = message.match(/\b(\d{1,4})\b/);

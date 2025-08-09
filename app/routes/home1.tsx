@@ -24,7 +24,8 @@ export default function Home() {
   const isSubmitting = fetcher.state === "submitting";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const {setProducts } = useProducts();
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const {setProducts : setProductsContext } = useProducts();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -33,7 +34,8 @@ export default function Home() {
     if (fetcher.state === "idle" && reply) {
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     }
-    if (fetcher.state === "idle" && data?.products) {
+    if (fetcher.state === "idle" && data?.products) { 
+      setProductsContext(data.products);
       setProducts(data.products);
     }
   }, [fetcher.state, fetcher.data]);
@@ -65,7 +67,7 @@ export default function Home() {
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BottomPanel />
+        <BottomPanel products={products} />
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
