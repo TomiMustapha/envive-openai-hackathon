@@ -1,8 +1,8 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
 import { useEffect, useRef, useState } from "react";
-import type { ChatResponse } from "../lib/chat/types";
 import { LeftPanel } from "../components/LeftPanel";
+import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,23 +11,25 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
+// Using shared ChatMessage type from lib
 
 export default function Home() {
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [emailHtml, setEmailHtml] = useState<string | undefined>(undefined);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    const data = fetcher.data as ChatResponse | undefined;
-    const reply = data?.reply;
-    if (fetcher.state === "idle" && reply) {
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+    const data = fetcher.data as AgentEmailResponse | undefined;
+    if (fetcher.state === "idle" && data) {
+      if (data.message) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.message! }]);
+      }
+      if (data.html) {
+        setEmailHtml(data.html);
+      }
     }
   }, [fetcher.state, fetcher.data]);
 
@@ -38,16 +40,12 @@ export default function Home() {
     const content = (formData.get("message") || "").toString().trim();
     if (!content) return;
 
-    setMessages((prev) => [...prev, { role: "user", content }]);
+    const nextMessages: ChatMessage[] = [...messages, { role: "user", content }];
+    setMessages(nextMessages);
 
     fetcher.submit(
-      { message: content },
-      { method: "post", action: "/api/chat", encType: "application/json" }
-    );
-
-    fetcher.submit(
-      { count: 100 },
-      { method: "get", action: "/api/products", encType: "application/json" }
+      { messages: nextMessages },
+      { method: "post", action: "/api/email-agent", encType: "application/json" }
     );
 
     setTimeout(() => {
@@ -58,12 +56,12 @@ export default function Home() {
     }, 0);
   };
 
-  const errorMessage = (fetcher.data as ChatResponse | undefined)?.error;
+  const errorMessage = (fetcher.data as AgentEmailResponse | undefined)?.error;
 
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <LeftPanel />
+        <LeftPanel emailHtml={emailHtml} />
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
@@ -108,7 +106,7 @@ export default function Home() {
                   ref={inputRef}
                   name="message"
                   rows={2}
-                  placeholder="Type your message…"
+                  placeholder='Paste a JSON array of 5 clothing products, or just type a request like "make a summer promo"'
                   className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
