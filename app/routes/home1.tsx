@@ -1,9 +1,9 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChatResponse } from "../lib/chat/types";
 import { LeftPanel } from "../components/LeftPanel";
 import type { CatalogProduct } from "~/lib/products/types";
-import type { ChatMessage, ChatResponse } from "~/lib/chat/types";
 import { BottomPanel } from "~/components/BottomPanel";
 
 export function meta({}: Route.MetaArgs) {
@@ -13,7 +13,10 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-// Using shared ChatMessage type from lib
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
 
 export default function Home() {
   const fetcher = useFetcher();
@@ -25,22 +28,14 @@ export default function Home() {
 
   useEffect(() => {
     const data = fetcher.data as ChatResponse | undefined;
-
     const reply = data?.reply;
     if (fetcher.state === "idle" && reply) {
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     }
-
-    const returnedProducts = data?.products;
-
-    if (fetcher.state === "idle" && returnedProducts && returnedProducts.length > 0) {
-      setProducts(returnedProducts);
-    }else{
-      setProducts([]);
+    if (fetcher.state === "idle" && data?.products) {
+      setProducts(data.products);
     }
   }, [fetcher.state, fetcher.data]);
-
-  
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
@@ -49,7 +44,7 @@ export default function Home() {
     const content = (formData.get("message") || "").toString().trim();
     if (!content) return;
 
-
+    setMessages((prev) => [...prev, { role: "user", content }]);
 
     fetcher.submit(
       { message: content },
@@ -66,74 +61,70 @@ export default function Home() {
 
   const errorMessage = (fetcher.data as ChatResponse | undefined)?.error;
 
-
-
   return (
     <main className="min-h-[100dvh] p-6">
+      <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <BottomPanel products={products} />
 
-        <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <BottomPanel products={products} />
-
-
-          <section className="lg:pl-4">
-            <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
-              <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-                <h2 className="font-medium">Chatbot</h2>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Start the conversation by sending a message.
-                  </p>
-                ) : (
-                  messages.map((m, idx) => (
-                    <div
-                      key={idx}
-                      className={
-                        m.role === "user"
-                          ? "ml-auto max-w-[80%] rounded-xl bg-blue-600 text-white px-3 py-2"
-                          : "mr-auto max-w-[80%] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
-                      }
-                    >
-                      {m.content}
-                    </div>
-                  ))
-                )}
-                {isSubmitting && (
-                  <div className="mr-auto max-w-[80%] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 animate-pulse">
-                    Thinking…
-                  </div>
-                )}
-                {fetcher.state === "idle" && errorMessage && (
-                  <div className="mr-auto max-w-[80%] rounded-xl border border-red-300/60 bg-red-50/60 dark:border-red-800/60 dark:bg-red-900/30 px-3 py-2 text-red-800 dark:text-red-200">
-                    {errorMessage}
-                  </div>
-                )}
-              </div>
-
-              <form className="p-3 border-t border-gray-100 dark:border-gray-800" onSubmit={handleSubmit}>
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={inputRef}
-                    name="message"
-                    rows={2}
-                    placeholder="Type your message…"
-                    className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-60"
-                  >
-                    Send
-                  </button>
-                </div>
-              </form>
+        <section className="lg:pl-4">
+          <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800">
+              <h2 className="font-medium">Chatbot</h2>
             </div>
-          </section>
-        </div>
-      </main>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Start the conversation by sending a message.
+                </p>
+              ) : (
+                messages.map((m, idx) => (
+                  <div
+                    key={idx}
+                    className={
+                      m.role === "user"
+                        ? "ml-auto max-w-[80%] rounded-xl bg-blue-600 text-white px-3 py-2"
+                        : "mr-auto max-w-[80%] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
+                    }
+                  >
+                    {m.content}
+                  </div>
+                ))
+              )}
+              {isSubmitting && (
+                <div className="mr-auto max-w-[80%] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 animate-pulse">
+                  Thinking…
+                </div>
+              )}
+              {fetcher.state === "idle" && errorMessage && (
+                <div className="mr-auto max-w-[80%] rounded-xl border border-red-300/60 bg-red-50/60 dark:border-red-800/60 dark:bg-red-900/30 px-3 py-2 text-red-800 dark:text-red-200">
+                  {errorMessage}
+                </div>
+              )}
+            </div>
+
+            <form className="p-3 border-t border-gray-100 dark:border-gray-800" onSubmit={handleSubmit}>
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={inputRef}
+                  name="message"
+                  rows={2}
+                  placeholder="Type your message…"
+                  className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                  Send
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
