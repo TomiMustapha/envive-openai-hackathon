@@ -95,6 +95,7 @@ export async function action({ request }: Route.ActionArgs) {
     const data = await response.json();
     let reply: string | undefined = data?.choices?.[0]?.message?.content;
 
+    console.log(reply);
 
     const products = reply?.split("\n--products--\n")[1];
     const productsJson = products ? JSON.parse(products) : [];  

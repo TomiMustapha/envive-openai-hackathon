@@ -3,6 +3,8 @@ import { useFetcher } from "react-router";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { LeftPanel } from "../components/LeftPanel";
 import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
+import { useProducts } from "./page";
+import { BottomPanel } from "~/components/BottomPanel";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -20,6 +22,7 @@ export default function Home() {
   type HistoryMessage = ChatMessage & { html?: string };
   const [history, setHistory] = useState<HistoryMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const {products} = useProducts();
 
   useEffect(() => {
     const data = fetcher.data as AgentEmailResponse | undefined;
@@ -72,6 +75,11 @@ export default function Home() {
 
   return (
     <main className="min-h-[100dvh] p-6">
+      {
+        products.length > 0 && (
+          <BottomPanel />
+        )
+      }
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
         <LeftPanel emailHtml={emailHtml} isLoading={isSubmitting} />
 

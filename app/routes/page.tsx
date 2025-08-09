@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useContext } from "react";
 import { LeftPanel } from "../components/LeftPanel";
 import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
 import Home1 from "./home1";
@@ -14,6 +14,31 @@ export function meta({}: Route.MetaArgs) {
 }
 
 // Using shared ChatMessage type from lib
+import { createContext } from "react";
+
+type ProductsContextType = {
+  products: any[];
+  setProducts: (products: any[]) => void;
+};
+
+export const ProductsContext = createContext<ProductsContextType>({
+  products: [],
+  setProducts: () => {},
+});
+
+export function ProductsProvider({ children }: { children: React.ReactNode }) {
+  const [products, setProducts] = useState<any[]>([]);
+
+  return (
+    <ProductsContext.Provider value={{ products, setProducts }}>
+      {children}
+    </ProductsContext.Provider>
+  );
+}
+
+export function useProducts() {
+  return useContext(ProductsContext);
+}
 
 export default function Page() {
 
@@ -24,8 +49,11 @@ export default function Page() {
 
   return (
     <main className="min-h-[100dvh] p-6">
-      {switchPage ? <Home1 /> : <Home2 />}
+      <ProductsProvider>
+        {switchPage ? <Home1 /> : <Home2 />}
+
       <button onClick={() => setSwitchPage(!switchPage)}>Switch Page</button>
+      </ProductsProvider>
     </main>
   );
 }

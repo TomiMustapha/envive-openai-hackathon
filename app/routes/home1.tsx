@@ -5,6 +5,7 @@ import type { ChatResponse } from "../lib/chat/types";
 import { LeftPanel } from "../components/LeftPanel";
 import type { CatalogProduct } from "~/lib/products/types";
 import { BottomPanel } from "~/components/BottomPanel";
+import { useProducts } from "./page";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -23,7 +24,7 @@ export default function Home() {
   const isSubmitting = fetcher.state === "submitting";
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const {setProducts } = useProducts();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function Home() {
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BottomPanel products={products} />
+        <BottomPanel />
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">

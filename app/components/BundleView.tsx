@@ -1,9 +1,10 @@
 import React from "react";
 import type { CatalogProduct } from "../lib/products/types";
+import { useProducts } from "~/routes/page";
 
 
-export function BundleView({ products }: { products: CatalogProduct[] }) {
-    console.log(products);
+export function BundleView() {
+  const { products } = useProducts();
   return (
     <div className="w-full">
     {products.length === 0 || products === undefined ? (
