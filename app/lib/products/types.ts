@@ -1,0 +1,20 @@
+export type CatalogProduct = {
+  "product-id": string;
+  "product-name": string;
+  "product-description": string;
+  "product-price": number;
+  "product-quantity": number;
+  "product-image": string;
+  "product-category": string;
+  "product-subcategory": string;
+  "product-brand": string;
+  "product-color": string;
+  "product-size": string;
+  "product-material": string;
+  "product-style": string;
+  "product-season": string;
+  "product-fit": string;
+  "product-occasion": string;
+  "product-tags": string[];
+  "product-attributes": Record<string, string>;
+}; 

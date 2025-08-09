@@ -2,9 +2,12 @@ export type ChatRequest = {
   message: string;
 };
 
+import type { CatalogProduct } from "../products/types";
+
 export type ChatResponse = {
   reply?: string;
   error?: string;
+  products?: CatalogProduct[];
 };
 
 export type ChatRole = "user" | "assistant" | "system";

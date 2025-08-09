@@ -1,7 +1,24 @@
 import type { Route } from "./+types/api.chat";
 import type { ChatRequest, ChatResponse } from "../lib/chat/types";
+import { generateCatalog } from "../lib/products/generate";
+import type { CatalogProduct } from "~/lib/products/types";
 
-const chatContext: { role: string; content: string; }[] = []
+const chatContext: { role: string; content: string }[] = [];
+const catalog = generateCatalog(500);
+
+function maybeExtractCount(message: string): number | null {
+  const match = message.match(/\b(\d{1,4})\b/);
+  if (match) {
+    const n = Number(match[1]);
+    if (Number.isFinite(n) && n > 0) return Math.min(n, 1000);
+  }
+  return null;
+}
+
+function wantsProducts(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("product") || lower.includes("catalog");
+}
 
 export async function action({ request }: Route.ActionArgs) {
   if (request.method !== "POST") {
@@ -27,11 +44,15 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
+    const wants = wantsProducts(message);
+    const count = maybeExtractCount(message) ?? 100;
+
     const apiKey = process.env.OPENAI_API_KEY;
     const shouldMock = process.env.MOCK_OPENAI === "true" || !apiKey;
     if (shouldMock) {
       const mock: ChatResponse = {
-        reply: `Mock response: You said “${message}”.`,
+        reply: `Mock response: You said “${message}”.` + (wants ? ` Generated ${count} products.` : ""),
+        products: catalog.slice(0, 3),
       };
       return Response.json(mock);
     }
@@ -44,11 +65,19 @@ export async function action({ request }: Route.ActionArgs) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-5",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "You are a helpful assistant." },
-          { role: "user", content: message },
+          { role: "system", content: JSON.stringify(catalog) },
+          { role: "system", content: "When a user asks for a product, only returns products that are in the catalog." },
+          { role: "system", content: "Always respond in two seperate messages. The first message should be the response to the user's message. Then add a line break \"\n--products--\n\" and then the list of products in a stringified JSON array that i can parse." },
+          { role: "system", content: "Always wrap the products json in a json object with the key \"products\"." },
+          { role: "system", content: "Always keep the reply short and concise. Do not add any other text or comments." },
+          { role: "system", content: "Always only return the products that are in the catalog. Do not make up products." },
+          { role: "system", content: "Outfit creations should only include products that are in the catalog." },
+          { role: "system", content: "Always return the products when making an outfit." },
           ...chatContext,
+          { role: "user", content: message },
         ],
         //temperature: 0.7,
       }),
@@ -62,10 +91,24 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
-    const data = await response.json();
-    const reply: string | undefined = data?.choices?.[0]?.message?.content;
 
-    return Response.json({ reply: reply ?? "No content returned." } satisfies ChatResponse);
+    const data = await response.json();
+    let reply: string | undefined = data?.choices?.[0]?.message?.content;
+
+
+    const products = reply?.split("\n--products--\n")[1];
+    const productsJson = products ? JSON.parse(products) : [];  
+    console.log(productsJson);
+    const productsArray = productsJson.products as CatalogProduct[];
+    reply = reply?.split("--products--")[0];
+
+    const result: ChatResponse = {
+      reply: reply ?? "No content returned.",
+      products: productsArray,
+    };
+    chatContext.push({ role: "assistant", content: data.choices[0].message.content });
+
+    return Response.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return Response.json({ error: message } satisfies ChatResponse, { status: 500 });
