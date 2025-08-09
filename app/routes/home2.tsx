@@ -1,10 +1,8 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useEffect, useRef, useState } from "react";
-import type { ChatResponse } from "../lib/chat/types";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { LeftPanel } from "../components/LeftPanel";
-import type { CatalogProduct } from "~/lib/products/types";
+import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -13,24 +11,25 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
+// Using shared ChatMessage type from lib
 
 export default function Home() {
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  type HistoryMessage = ChatMessage & { html?: string };
+  const [history, setHistory] = useState<HistoryMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    const data = fetcher.data as ChatResponse | undefined;
-    const reply = data?.reply;
-    if (fetcher.state === "idle" && reply) {
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+    const data = fetcher.data as AgentEmailResponse | undefined;
+    if (fetcher.state === "idle" && data) {
+      if (data.message || data.html) {
+        setHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: data.message ?? "", html: data.html },
+        ]);
+      }
     }
   }, [fetcher.state, fetcher.data]);
 
@@ -41,11 +40,19 @@ export default function Home() {
     const content = (formData.get("message") || "").toString().trim();
     if (!content) return;
 
-    setMessages((prev) => [...prev, { role: "user", content }]);
+    const nextHistory: HistoryMessage[] = [...history, { role: "user", content }];
+    setHistory(nextHistory);
 
+    const apiMessages: ChatMessage[] = [];
+    for (const m of nextHistory) {
+      apiMessages.push({ role: m.role, content: m.content });
+      if (m.role === "assistant" && m.html) {
+        apiMessages.push({ role: "assistant", content: `PREVIOUS_EMAIL_HTML:\n${m.html}` });
+      }
+    }
     fetcher.submit(
-      { message: content },
-      { method: "post", action: "/api/chat", encType: "application/json" }
+      { messages: apiMessages },
+      { method: "post", action: "/api/email-agent", encType: "application/json" }
     );
 
     setTimeout(() => {
@@ -56,56 +63,31 @@ export default function Home() {
     }, 0);
   };
 
-  const heroPoints = useMemo(
-    () => [
-      "Fast, server-secure API calls",
-      "Beautiful Tailwind UI",
-      "React Router Full-Stack",
-    ],
-    []
-  );
+  const errorMessage = (fetcher.data as AgentEmailResponse | undefined)?.error;
 
-  const errorMessage = (fetcher.data as ChatResponse | undefined)?.error;
+  const emailHtml = useMemo(
+    () => [...history].reverse().find((m) => m.html)?.html,
+    [history]
+  );
 
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <section className="flex flex-col justify-center gap-6">
-          <div className="space-y-3">
-            <h1 className="text-4xl font-semibold tracking-tight">Envive</h1>
-            <p className="text-gray-600 dark:text-gray-300 text-lg">
-              Build with AI. Secure server actions, modern React, and a
-              clean developer experience.
-            </p>
-          </div>
-          <ul className="space-y-2">
-            {heroPoints.map((point) => (
-              <li
-                key={point}
-                className="flex items-center gap-3 text-gray-700 dark:text-gray-200"
-              >
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs">✓</span>
-                {point}
-              </li>
-            ))}
-          </ul>
-        </section>
-        <BottomPanel products={products} />
+        <LeftPanel emailHtml={emailHtml} isLoading={isSubmitting} />
 
         <section className="lg:pl-4">
-          <div className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
             <div className="p-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="font-medium">Chatbot</h2>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? (
+              {history.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Start the conversation by sending a message.
                 </p>
               ) : (
-                messages.map((m, idx) => (
+                history.map((m, idx) => (
                   <div
                     key={idx}
                     className={
@@ -136,7 +118,7 @@ export default function Home() {
                   ref={inputRef}
                   name="message"
                   rows={2}
-                  placeholder="Type your message…"
+                  placeholder='Paste a JSON array of 5 clothing products, or just type a request like "make a summer promo"'
                   className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />

@@ -33,4 +33,5 @@ export type AgentEmailResponse = {
   message?: string;
   html?: string;
   error?: string;
+  
 }; 
