@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { LeftPanel } from "../components/LeftPanel";
 import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
 
@@ -17,18 +17,18 @@ export default function Home() {
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [emailHtml, setEmailHtml] = useState<string | undefined>(undefined);
+  type HistoryMessage = ChatMessage & { html?: string };
+  const [history, setHistory] = useState<HistoryMessage[]>([]);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const data = fetcher.data as AgentEmailResponse | undefined;
     if (fetcher.state === "idle" && data) {
-      if (data.message) {
-        setMessages((prev) => [...prev, { role: "assistant", content: data.message! }]);
-      }
-      if (data.html) {
-        setEmailHtml(data.html);
+      if (data.message || data.html) {
+        setHistory((prev) => [
+          ...prev,
+          { role: "assistant", content: data.message ?? "", html: data.html },
+        ]);
       }
     }
   }, [fetcher.state, fetcher.data]);
@@ -40,11 +40,18 @@ export default function Home() {
     const content = (formData.get("message") || "").toString().trim();
     if (!content) return;
 
-    const nextMessages: ChatMessage[] = [...messages, { role: "user", content }];
-    setMessages(nextMessages);
+    const nextHistory: HistoryMessage[] = [...history, { role: "user", content }];
+    setHistory(nextHistory);
 
+    const apiMessages: ChatMessage[] = [];
+    for (const m of nextHistory) {
+      apiMessages.push({ role: m.role, content: m.content });
+      if (m.role === "assistant" && m.html) {
+        apiMessages.push({ role: "assistant", content: `PREVIOUS_EMAIL_HTML:\n${m.html}` });
+      }
+    }
     fetcher.submit(
-      { messages: nextMessages },
+      { messages: apiMessages },
       { method: "post", action: "/api/email-agent", encType: "application/json" }
     );
 
@@ -58,10 +65,15 @@ export default function Home() {
 
   const errorMessage = (fetcher.data as AgentEmailResponse | undefined)?.error;
 
+  const emailHtml = useMemo(
+    () => [...history].reverse().find((m) => m.html)?.html,
+    [history]
+  );
+
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <LeftPanel emailHtml={emailHtml} />
+        <LeftPanel emailHtml={emailHtml} isLoading={isSubmitting} />
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
@@ -70,12 +82,12 @@ export default function Home() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? (
+              {history.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Start the conversation by sending a message.
                 </p>
               ) : (
-                messages.map((m, idx) => (
+                history.map((m, idx) => (
                   <div
                     key={idx}
                     className={

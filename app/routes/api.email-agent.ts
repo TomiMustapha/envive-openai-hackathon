@@ -60,6 +60,8 @@ function sampleProducts(): Product[] {
   ];
 }
 
+// Semantic intent classification removed — handled by model via system prompt
+
 export async function action({ request }: Route.ActionArgs) {
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
@@ -93,6 +95,33 @@ export async function action({ request }: Route.ActionArgs) {
     const products = parseProductsFromFirstUserMessage(messages) ?? sampleProducts();
 
     const apiKey = process.env.OPENAI_API_KEY;
+    const body = JSON.stringify({
+        model: "gpt-5",
+        messages: [
+          {
+            role: "system",
+            content:
+              `You are an expert email product template designer, you should only respond to requests or questions related to designing email campaigns, any other unrelated you should respond with a message that you are not able to help with that.
+              You will receive a JSON array of up to 5 clothing products (with name, image URL, price, description).
+              If you don't see the product information, please ask the user to provide the product information.
+
+              
+              Determine the user's intent from the conversation: generate/modify a email campaign, or other questions.
+              Respond with exactly one JSON object using these rules:
+              - For generate/modify: { "message": string, "html": string }. The html must be a fully exportable HTML document including <!doctype html>, <html>, <head> with a single <style> tag containing all CSS, and <body> with the email content. The message is a brief, non-technical 1–2 sentence summary of what you created.
+              - For other questions: { "message": string } answering the question concisely. Do NOT include html.
+              Do not include any markdown, code fences, or text outside of the JSON. Use only the provided image URLs when generating html.
+
+              When updating/modifying the email campaign, change only what the user asked for, and keep the rest of the html as is.
+              Assistant turns may contain a line starting with "PREVIOUS_EMAIL_HTML:" followed by the current HTML. Use this exact HTML as the starting point for modifications and preserve all unchanged parts.
+              `,
+          },
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+        ],
+        reasoning_effort: "minimal"
+    })
+
+    console.log(body);
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -100,24 +129,9 @@ export async function action({ request }: Route.ActionArgs) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: "gpt-5",
-        messages: [
-          {
-            role: "system",
-            content:
-              `You are an expert email product template designer.
-              You will receive a JSON array of up to 5 clothing products (with name, image URL, price, description).
-              Create a professional promotional email based on these products. Output strictly a single JSON object with keys: message, html.
-              The html must be a fully exportable HTML document including <!doctype html>, <html>, <head> with a single <style> tag containing all CSS, and <body> with the email content.
-              Do not include any markdown, code fences, or text outside of the JSON. Use only the provided image URLs.
-              `,
-          },
-          { role: "user", content: JSON.stringify(products) },
-          ...messages.filter((m) => m.role !== "user" || m !== messages[0]).map((m) => ({ role: m.role, content: m.content })),
-        ],
-      }),
+      body,
     });
+
 
     if (!response.ok) {
       const text = await response.text();
@@ -141,17 +155,12 @@ export async function action({ request }: Route.ActionArgs) {
     try {
       payload = JSON.parse(rawContent) as AgentEmailResponse;
     } catch {
-      return Response.json(
-        { error: "Model returned non-JSON content. Please retry." } satisfies AgentEmailResponse,
-        { status: 502 }
-      );
+      // Be tolerant: if the model returns plain text, surface it as the message
+      payload = { message: rawContent.trim() };
     }
 
-    if (!payload?.html) {
-      return Response.json(
-        { error: "Model did not include html in the response." } satisfies AgentEmailResponse,
-        { status: 502 }
-      );
+    if (!payload.message && typeof rawContent === "string" && rawContent.trim() && !rawContent.trim().startsWith("{")) {
+      payload.message = rawContent.trim();
     }
 
     return Response.json(payload satisfies AgentEmailResponse);
