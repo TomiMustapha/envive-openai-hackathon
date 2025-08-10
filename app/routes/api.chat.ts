@@ -65,9 +65,16 @@ export async function action({ request }: Route.ActionArgs) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-5",
         messages: [
-          { role: "system", content: "You are a helpful assistant who helps users create product bundles." },
+          { role: "system", content: `You are a helpful assistant who helps users create product bundles.
+            You are also an expert email product template designer,
+            you should only respond to requests or questions related to creating/updateing product bundles or creating/designing email campaigns,
+            any other unrelated you should respond with a message that you are not able to help with that.
+
+            When a user asks for generating a email campaign, use the most recent product bundle in the conversation history to generate the email campaign.
+            If you don't see the product bundle in the conversation history, please ask the user to create a product bundle.
+            ` },
           { role: "system", content: JSON.stringify(catalog) },
           { role: "system", content: "When a user asks for a product bundle, only returns products that are in the catalog." },
           { role: "system", content: `
@@ -94,9 +101,10 @@ export async function action({ request }: Route.ActionArgs) {
               }; 
          `},
           { role: "system", content: `
-            Determine the user's intent from the conversation: create or modify a product bundle, or other questions.
+            Determine the user's intent from the conversation: create or modify a product bundle, generate/modify a email campaign,or other questions.
               Respond with exactly one JSON object using these rules:
               - For generate/modify product bundle: { "reply": string, "products": Product[] }.
+              - For generate/modify a email campaign: { "reply": string, "html": string }.
               - For other questions: { "reply": string } answering the question concisely. Do NOT include products.`
           },
           ...chatContext,
@@ -116,6 +124,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 
     const data = await response.json();
+
     let res: string | undefined = data?.choices?.[0]?.message?.content;
     
     const result: ChatResponse = {

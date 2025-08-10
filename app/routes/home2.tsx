@@ -1,26 +1,17 @@
-import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LeftPanel } from "../components/LeftPanel";
 import type { AgentEmailResponse, ChatMessage } from "../lib/chat/types";
 import { useProducts } from "./page";
 import { BottomPanel } from "~/components/BottomPanel";
-
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Envive | AI Chat" },
-    { name: "description", content: "Landing page with an AI chatbot" },
-  ];
-}
 
 // Using shared ChatMessage type from lib
 
 export default function Home() {
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
-
-  type HistoryMessage = ChatMessage & { html?: string };
-  const [history, setHistory] = useState<HistoryMessage[]>([]);
+  const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [emailHtml, setEmailHtml] = useState<string | undefined>(undefined);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const {products} = useProducts();
 
@@ -29,11 +20,11 @@ export default function Home() {
   useEffect(() => {
     const data = fetcher.data as AgentEmailResponse | undefined;
     if (fetcher.state === "idle" && data) {
-      if (data.message || data.html) {
-        setHistory((prev) => [
-          ...prev,
-          { role: "assistant", content: data.message ?? "", html: data.html },
-        ]);
+      if (data.message) {
+        setHistory((prev) => [...prev, { role: "assistant", content: data.message! }]);
+      }
+      if (data.html) {
+        setEmailHtml(data.html);
       }
     }
   }, [fetcher.state, fetcher.data]);
@@ -45,15 +36,12 @@ export default function Home() {
     const content = (formData.get("message") || "").toString().trim();
     if (!content) return;
 
-    const nextHistory: HistoryMessage[] = [...history, { role: "user", content }];
+    const nextHistory: ChatMessage[] = [...history, { role: "user", content }];
     setHistory(nextHistory);
 
-    const apiMessages: ChatMessage[] = [];
-    for (const m of nextHistory) {
-      apiMessages.push({ role: m.role, content: m.content });
-      if (m.role === "assistant" && m.html) {
-        apiMessages.push({ role: "assistant", content: `PREVIOUS_EMAIL_HTML:\n${m.html}` });
-      }
+    const apiMessages: ChatMessage[] = nextHistory.map(({ role, content }) => ({ role, content }));
+    if (emailHtml) {
+      apiMessages.push({ role: "assistant", content: `PREVIOUS_EMAIL_HTML:\n${emailHtml}` });
     }
     fetcher.submit(
       { messages: apiMessages, products: products },
@@ -69,11 +57,6 @@ export default function Home() {
   };
 
   const errorMessage = (fetcher.data as AgentEmailResponse | undefined)?.error;
-
-  const emailHtml = useMemo(
-    () => [...history].reverse().find((m) => m.html)?.html,
-    [history]
-  );
 
   return (
     <main className="min-h-[100dvh] p-6">
