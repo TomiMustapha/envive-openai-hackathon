@@ -115,6 +115,7 @@ export async function action({ request }: Route.ActionArgs) {
           ...chatContext,
           { role: "user", content: message },
         ],
+        reasoning_effort: "minimal"
         //temperature: 0.7,
       }),
     });
