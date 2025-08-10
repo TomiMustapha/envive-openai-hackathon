@@ -4,7 +4,7 @@ export function LeftPanel({ emailHtml, isLoading }: { emailHtml?: string; isLoad
   return (
     <section className="flex flex-col gap-4">
       <h3 className="text-lg font-medium">Live Email Preview</h3>
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden min-h-[240px]">
+      <div className="rounded-3xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-gray-900/40 backdrop-blur supports-[backdrop-filter]:bg-white/40 overflow-hidden min-h-[240px] shadow-xl">
         {isLoading && !emailHtml ? (
           <div className="p-4 animate-pulse">
             <div className="h-6 w-1/3 rounded bg-gray-200 dark:bg-gray-800 mb-3" />

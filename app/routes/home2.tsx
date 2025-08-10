@@ -69,7 +69,7 @@ export default function Home() {
         
 
         <section className="lg:pl-4">
-          <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
+          <div id="chat" className="h-full rounded-3xl border border-white/20 dark:border-white/10 bg-white/60 dark:bg-gray-900/40 backdrop-blur supports-[backdrop-filter]:bg-white/40 shadow-xl flex flex-col">
             <div className="p-4 border-b border-gray-100 dark:border-gray-800">
               <h2 className="font-medium">Chatbot</h2>
             </div>
@@ -105,16 +105,18 @@ export default function Home() {
               )}
             </div>
 
-            <form className="p-3 border-t border-gray-100 dark:border-gray-800" onSubmit={handleSubmit}>
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={inputRef}
-                  name="message"
-                  rows={2}
-                  placeholder='Paste a JSON array of 5 clothing products, or just type a request like "make a summer promo"'
-                  className="flex-1 resize-none rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
+            <form className="sticky bottom-0 p-4 border-t border-white/20 dark:border-white/10 bg-white/50 dark:bg-gray-950/30 backdrop-blur supports-[backdrop-filter]:bg-white/40" onSubmit={handleSubmit}>
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 items-center gap-3 rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 px-4 py-3 shadow-sm">
+                 <textarea
+                   ref={inputRef}
+                   name="message"
+                   rows={1}
+                   placeholder='Paste a JSON array of 5 clothing products, or just type a request like "make a summer promo"'
+                   className="flex-1 resize-none bg-transparent border-0 outline-none focus:ring-0 placeholder:text-gray-500 dark:placeholder:text-gray-400 p-0"
+                   required
+                 />
+                 </div>
                 <button
                   type="submit"
                   disabled={isSubmitting}

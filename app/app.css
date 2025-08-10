@@ -7,9 +7,22 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  min-height: 100dvh;
+  background-color: #f6f7fb;
+  background-image:
+    radial-gradient(1200px 700px at 0% 0%, rgba(255, 186, 152, 0.35), transparent 60%),
+    radial-gradient(1000px 600px at 100% 0%, rgba(171, 200, 255, 0.35), transparent 60%),
+    radial-gradient(1000px 700px at 50% 100%, rgba(255, 173, 207, 0.28), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
+    background-color: #0b0f16;
+    background-image:
+      radial-gradient(1200px 700px at 0% 0%, rgba(255, 186, 152, 0.18), transparent 60%),
+      radial-gradient(1000px 600px at 100% 0%, rgba(171, 200, 255, 0.18), transparent 60%),
+      radial-gradient(1000px 700px at 50% 100%, rgba(255, 173, 207, 0.16), transparent 60%);
   }
 }
