@@ -70,6 +70,7 @@ export async function action({ request }: Route.ActionArgs) {
           { role: "system", content: "You are a helpful assistant who helps users create product bundles." },
           { role: "system", content: JSON.stringify(catalog) },
           { role: "system", content: "When a user asks for a product bundle, only returns products that are in the catalog." },
+          { role: "system", content: "You're only an expert in the catalog. If a user asks anything unrelated to the catalog, you should respond with a message saying you're only an expert in the catalog." },
           { role: "system", content: `
             Here is the shape of a product:
               Product = {
