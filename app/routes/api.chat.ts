@@ -67,15 +67,38 @@ export async function action({ request }: Route.ActionArgs) {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are a helpful assistant." },
+          { role: "system", content: "You are a helpful assistant who helps users create product bundles." },
           { role: "system", content: JSON.stringify(catalog) },
-          { role: "system", content: "When a user asks for a product, only returns products that are in the catalog." },
-          { role: "system", content: "Always wrap the products json in a json object with the key \"products\"." },
-          { role: "system", content: "Always keep the reply short and concise. Do not add any other text or comments." },
-          { role: "system", content: "Always only return the products that are in the catalog. Do not make up products." },
-          { role: "system", content: "Outfit creations should only include products that are in the catalog." },
-          { role: "system", content: "Always return the products when making an outfit." },
-          { role: "system", content: "Always respond in json format. The json should have a key \"products\" and the value should be an array of products.,and another key \"reply\" and the value should be the reply to the user's message." },
+          { role: "system", content: "When a user asks for a product bundle, only returns products that are in the catalog." },
+          { role: "system", content: `
+            Here is the shape of a product:
+              Product = {
+                "product-id": string;
+                "product-name": string;
+                "product-description": string;
+                "product-price": number;
+                "product-quantity": number;
+                "product-image": string;
+                "product-category": string;
+                "product-subcategory": string;
+                "product-brand": string;
+                "product-color": string;
+                "product-size": string;
+                "product-material": string;
+                "product-style": string;
+                "product-season": string;
+                "product-fit": string;
+                "product-occasion": string;
+                "product-tags": string[];
+                "product-attributes": Record<string, string>;
+              }; 
+         `},
+          { role: "system", content: `
+            Determine the user's intent from the conversation: create or modify a product bundle, or other questions.
+              Respond with exactly one JSON object using these rules:
+              - For generate/modify: { "reply": string, "products": Product[] }.
+              - For other questions: { "message": string } answering the question concisely. Do NOT include products.`
+          },
           ...chatContext,
           { role: "user", content: message },
         ],
