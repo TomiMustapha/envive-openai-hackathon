@@ -66,7 +66,7 @@ export default function Home() {
         )
       }
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <LeftPanel emailHtml={emailHtml} isLoading={isSubmitting} />
+        
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
