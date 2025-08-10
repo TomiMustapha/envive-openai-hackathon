@@ -5,6 +5,7 @@ import { LeftPanel } from "../components/LeftPanel";
 import type { CatalogProduct } from "~/lib/products/types";
 import { BottomPanel } from "~/components/BottomPanel";
 import { useProducts } from "./page";
+import Message from "~/components/Message";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -20,13 +21,13 @@ export default function Home1() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    const data = fetcher.data as ChatResponse | undefined;
-    const reply = data?.reply;
-    if (fetcher.state === "idle" && reply) {
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+    const data = fetcher.data
+    if (fetcher.state === "idle" && data) {
+      setMessages((prev) => [...prev, { role: "assistant", content: data.content}]);
     }
     if (fetcher.state === "idle" && data?.products) {
       setProductsContext(data.products as CatalogProduct[]);
+      console.log(data.products);
     }
   }, [fetcher.state, fetcher.data, setProductsContext]);
 
@@ -56,8 +57,6 @@ export default function Home1() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <BottomPanel products={products} />
-
       <section className="lg:pl-4">
         <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
           <div className="p-4 border-b border-gray-100 dark:border-gray-800">
@@ -71,16 +70,7 @@ export default function Home1() {
               </p>
             ) : (
               messages.map((m, idx) => (
-                <div
-                  key={idx}
-                  className={
-                    m.role === "user"
-                      ? "ml-auto max-w-[80%] rounded-xl bg-blue-600 text-white px-3 py-2"
-                      : "mr-auto max-w-[80%] rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2"
-                  }
-                >
-                  {m.content}
-                </div>
+                <Message key={idx} message={m} />
               ))
             )}
             {isSubmitting && (

@@ -70,7 +70,6 @@ export async function action({ request }: Route.ActionArgs) {
           { role: "system", content: "You are a helpful assistant who helps users create product bundles." },
           { role: "system", content: JSON.stringify(catalog) },
           { role: "system", content: "When a user asks for a product bundle, only returns products that are in the catalog." },
-          { role: "system", content: "You're only an expert in the catalog. If a user asks anything unrelated to the catalog, you should respond with a message saying you're only an expert in the catalog." },
           { role: "system", content: `
             Here is the shape of a product:
               Product = {
@@ -118,16 +117,9 @@ export async function action({ request }: Route.ActionArgs) {
 
     const data = await response.json();
     let res: string | undefined = data?.choices?.[0]?.message?.content;
-
-    const parsedRes = JSON.parse(res ?? "{}");
-    const products = parsedRes.products;
-    const reply = parsedRes.reply;
-    console.log(products);
-    const productsArray = products as CatalogProduct[];
-
+    
     const result: ChatResponse = {
-      reply: reply ?? "No content returned.",
-      products: productsArray,
+      content: res ?? "No content returned.",
     };
     chatContext.push({ role: "assistant", content: data.choices[0].message.content });
 
