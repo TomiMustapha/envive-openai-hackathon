@@ -12,10 +12,10 @@ export function BundleView({ products }: { products: CatalogProduct[] }) {
         No products to display.
       </div>
     ) : (
-      <div className="flex items-stretch flex-nowrap gap-2 overflow-hidden">
+      <div className="flex items-stretch flex-nowrap gap-2 overflow-x-auto overflow-y-hidden">
         {products.map((product, idx) => (
           <React.Fragment key={product["product-id"]}>
-            <div className="flex-1 basis-0 min-w-0 flex flex-col h-72 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm px-3 py-3">
+            <div className="flex-none w-64 flex flex-col h-72 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm px-3 py-3">
               <div className="h-32 w-full overflow-hidden rounded-md bg-gray-50 dark:bg-gray-800 mb-2 flex-none">
                 <img
                   src={product["product-image"]}
