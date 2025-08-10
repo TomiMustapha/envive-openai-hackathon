@@ -18,7 +18,12 @@ export function LeftPanel({ emailHtml, isLoading }: { emailHtml?: string; isLoad
             <div className="h-10 w-32 rounded bg-gray-200 dark:bg-gray-800 mt-4" />
           </div>
         ) : emailHtml ? (
-          <div className="[&_img]:max-w-full" dangerouslySetInnerHTML={{ __html: emailHtml }} />
+          <iframe
+            title="Email Preview"
+            className="w-full min-h-[240px] h-[640px] border-0 bg-white"
+            sandbox=""
+            srcDoc={emailHtml}
+          />
         ) : (
           <div className="p-4 text-sm text-gray-500 dark:text-gray-400">
             No email yet — ask the assistant to create one.
