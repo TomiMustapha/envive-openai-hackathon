@@ -1,4 +1,3 @@
-import type { Route } from "./+types/home";
 import { useFetcher } from "react-router";
 import { useEffect, useRef, useState } from "react";
 import type { ChatResponse } from "../lib/chat/types";
@@ -7,7 +6,7 @@ import type { CatalogProduct } from "~/lib/products/types";
 import { BottomPanel } from "~/components/BottomPanel";
 import { useProducts } from "./page";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "Envive | AI Chat" },
     { name: "description", content: "Landing page with an AI chatbot" },
@@ -25,7 +24,7 @@ export default function Home() {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
-  const {setProducts : setProductsContext } = useProducts();
+  const { setProducts: setProductsContext } = useProducts();
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -34,7 +33,7 @@ export default function Home() {
     if (fetcher.state === "idle" && reply) {
       setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     }
-    if (fetcher.state === "idle" && data?.products) { 
+    if (fetcher.state === "idle" && data?.products) {
       setProductsContext(data.products);
       setProducts(data.products);
     }
@@ -67,7 +66,7 @@ export default function Home() {
   return (
     <main className="min-h-[100dvh] p-6">
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <BottomPanel products={products} />
+        <BottomPanel products={products} isLoading={isSubmitting} />
 
         <section className="lg:pl-4">
           <div id="chat" className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm flex flex-col">
