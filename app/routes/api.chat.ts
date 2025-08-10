@@ -107,6 +107,11 @@ export async function action({ request }: Route.ActionArgs) {
               - For generate/modify a email campaign: { "reply": string, "html": string }.
               - For other questions: { "reply": string } answering the question concisely. Do NOT include products.`
           },
+          { role: "system", content: `
+            Please also ask some follow up questions to the user what they want to do next.
+            Some quetions can be:
+             - Do you want to create an email campaign out of this bundle?`
+          },
           ...chatContext,
           { role: "user", content: message },
         ],
