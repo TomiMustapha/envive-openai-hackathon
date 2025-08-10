@@ -1,5 +1,6 @@
 import type { Route } from "./+types/api.email-agent";
-import type { AgentChatRequest, ChatMessage, AgentEmailResponse, Product } from "../lib/chat/types";
+import type { AgentChatRequest, ChatMessage, AgentEmailResponse } from "../lib/chat/types";
+import type { CatalogProduct } from "../lib/products/types";
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -20,27 +21,16 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
   return result;
 }
 
-function parseProductsFromFirstUserMessage(messages: ChatMessage[]): Product[] | null {
+function parseProductsFromFirstUserMessage(messages: ChatMessage[]): CatalogProduct[] | null {
   const firstUser = messages.find((m) => m.role === "user");
   if (!firstUser) return null;
   try {
     const parsed = JSON.parse(firstUser.content);
     if (!Array.isArray(parsed)) return null;
-    const products: Product[] = [];
+    const products: CatalogProduct[] = [];
     for (const p of parsed) {
-      if (
-        p &&
-        typeof p === "object" &&
-        typeof (p as any).name === "string" &&
-        typeof (p as any).image === "string"
-      ) {
-        products.push({
-          id: (p as any).id,
-          name: (p as any).name,
-          image: (p as any).image,
-          price: (p as any).price,
-          description: (p as any).description,
-        });
+      if (p && typeof p === "object" && (p as any)["product-id"] && (p as any)["product-name"] && (p as any)["product-image"]) {
+        products.push(p as CatalogProduct);
       }
       if (products.length === 5) break;
     }
@@ -50,13 +40,108 @@ function parseProductsFromFirstUserMessage(messages: ChatMessage[]): Product[] |
   }
 }
 
-function sampleProducts(): Product[] {
+function sampleProducts(): CatalogProduct[] {
   return [
-    { id: "p1", name: "Classic White T-Shirt", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80", price: 19.99, description: "Soft cotton tee with a clean, timeless fit." },
-    { id: "p2", name: "Denim Jacket", image: "https://images.unsplash.com/photo-1516826957135-700dedea698c?w=800&q=80", price: 79.99, description: "Medium wash, everyday layering essential." },
-    { id: "p3", name: "Athletic Joggers", image: "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80", price: 49.99, description: "Tapered fit with breathable stretch fabric." },
-    { id: "p4", name: "Cozy Hoodie", image: "https://images.unsplash.com/photo-1520975916090-3105956dac38?w=800&q=80", price: 59.99, description: "Fleece-lined comfort for cool days." },
-    { id: "p5", name: "Everyday Sneakers", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80", price: 69.99, description: "Versatile, lightweight, and durable." },
+    {
+      "product-id": "p1",
+      "product-name": "Classic White T-Shirt",
+      "product-description": "Soft cotton tee with a clean, timeless fit.",
+      "product-price": 19.99,
+      "product-quantity": 100,
+      "product-image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
+      "product-category": "clothing",
+      "product-subcategory": "tops",
+      "product-brand": "Acme",
+      "product-color": "white",
+      "product-size": "M",
+      "product-material": "cotton",
+      "product-style": "classic",
+      "product-season": "all",
+      "product-fit": "regular",
+      "product-occasion": "casual",
+      "product-tags": ["tee", "basic"],
+      "product-attributes": {}
+    },
+    {
+      "product-id": "p2",
+      "product-name": "Denim Jacket",
+      "product-description": "Medium wash, everyday layering essential.",
+      "product-price": 79.99,
+      "product-quantity": 50,
+      "product-image": "https://images.unsplash.com/photo-1516826957135-700dedea698c?w=800&q=80",
+      "product-category": "clothing",
+      "product-subcategory": "outerwear",
+      "product-brand": "Acme",
+      "product-color": "blue",
+      "product-size": "M",
+      "product-material": "denim",
+      "product-style": "casual",
+      "product-season": "all",
+      "product-fit": "regular",
+      "product-occasion": "casual",
+      "product-tags": ["denim", "jacket"],
+      "product-attributes": {}
+    },
+    {
+      "product-id": "p3",
+      "product-name": "Athletic Joggers",
+      "product-description": "Tapered fit with breathable stretch fabric.",
+      "product-price": 49.99,
+      "product-quantity": 80,
+      "product-image": "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80",
+      "product-category": "clothing",
+      "product-subcategory": "pants",
+      "product-brand": "Acme",
+      "product-color": "gray",
+      "product-size": "M",
+      "product-material": "poly blend",
+      "product-style": "athleisure",
+      "product-season": "all",
+      "product-fit": "tapered",
+      "product-occasion": "casual",
+      "product-tags": ["joggers", "sport"],
+      "product-attributes": {}
+    },
+    {
+      "product-id": "p4",
+      "product-name": "Cozy Hoodie",
+      "product-description": "Fleece-lined comfort for cool days.",
+      "product-price": 59.99,
+      "product-quantity": 60,
+      "product-image": "https://images.unsplash.com/photo-1520975916090-3105956dac38?w=800&q=80",
+      "product-category": "clothing",
+      "product-subcategory": "tops",
+      "product-brand": "Acme",
+      "product-color": "black",
+      "product-size": "M",
+      "product-material": "fleece",
+      "product-style": "casual",
+      "product-season": "fall",
+      "product-fit": "regular",
+      "product-occasion": "casual",
+      "product-tags": ["hoodie", "warm"],
+      "product-attributes": {}
+    },
+    {
+      "product-id": "p5",
+      "product-name": "Everyday Sneakers",
+      "product-description": "Versatile, lightweight, and durable.",
+      "product-price": 69.99,
+      "product-quantity": 120,
+      "product-image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
+      "product-category": "footwear",
+      "product-subcategory": "sneakers",
+      "product-brand": "Acme",
+      "product-color": "white",
+      "product-size": "10",
+      "product-material": "synthetic",
+      "product-style": "casual",
+      "product-season": "all",
+      "product-fit": "regular",
+      "product-occasion": "casual",
+      "product-tags": ["shoes", "daily"],
+      "product-attributes": {}
+    }
   ];
 }
 
@@ -70,20 +155,37 @@ export async function action({ request }: Route.ActionArgs) {
   try {
     const contentType = request.headers.get("content-type") || "";
     let messages: ChatMessage[] = [];
+    let productsFromBody: unknown = undefined;
+
+    console.log('hello')
 
     if (contentType.includes("application/json")) {
+        console.log(161);
       const body = (await request.json()) as Partial<AgentChatRequest> | unknown;
+      productsFromBody = (body as any)?.products;
+      console.log({body});
       const raw = (body as any)?.messages ?? body;
       messages = normalizeMessages(raw);
     } else {
+        console.log(167);
       const formData = await request.formData();
       const raw = formData.get("messages");
+      const rawProducts = formData.get("products");
+      if (typeof rawProducts === "string") {
+        try {
+          productsFromBody = JSON.parse(rawProducts);
+        } catch {
+          productsFromBody = rawProducts;
+        }
+      }
       if (typeof raw === "string") {
         try {
           messages = normalizeMessages(JSON.parse(raw));
         } catch {}
       }
     }
+
+    console.log(productsFromBody);
 
     if (!messages.length) {
       return Response.json(
@@ -92,7 +194,7 @@ export async function action({ request }: Route.ActionArgs) {
       );
     }
 
-    const products = parseProductsFromFirstUserMessage(messages) ?? sampleProducts();
+    const products: CatalogProduct[] = (Array.isArray(productsFromBody) ? (productsFromBody as CatalogProduct[]) : parseProductsFromFirstUserMessage(messages)) ?? sampleProducts();
 
     const apiKey = process.env.OPENAI_API_KEY;
     const body = JSON.stringify({
@@ -116,6 +218,7 @@ export async function action({ request }: Route.ActionArgs) {
               Assistant turns may contain a line starting with "PREVIOUS_EMAIL_HTML:" followed by the current HTML. Use this exact HTML as the starting point for modifications and preserve all unchanged parts.
               `,
           },
+          { role: "user", content: JSON.stringify(products) },
           ...messages.map((m) => ({ role: m.role, content: m.content })),
         ],
         reasoning_effort: "minimal"

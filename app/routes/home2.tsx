@@ -24,6 +24,8 @@ export default function Home() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const {products} = useProducts();
 
+  console.log({products});
+
   useEffect(() => {
     const data = fetcher.data as AgentEmailResponse | undefined;
     if (fetcher.state === "idle" && data) {
@@ -54,7 +56,7 @@ export default function Home() {
       }
     }
     fetcher.submit(
-      { messages: apiMessages },
+      { messages: apiMessages, products: products },
       { method: "post", action: "/api/email-agent", encType: "application/json" }
     );
 

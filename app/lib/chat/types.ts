@@ -19,14 +19,7 @@ export type ChatMessage = {
 
 export type AgentChatRequest = {
   messages: ChatMessage[];
-};
-
-export type Product = {
-  id?: string;
-  name: string;
-  image: string;
-  price?: number | string;
-  description?: string;
+  products?: CatalogProduct[] | unknown;
 };
 
 export type AgentEmailResponse = {

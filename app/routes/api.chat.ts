@@ -96,8 +96,8 @@ export async function action({ request }: Route.ActionArgs) {
           { role: "system", content: `
             Determine the user's intent from the conversation: create or modify a product bundle, or other questions.
               Respond with exactly one JSON object using these rules:
-              - For generate/modify: { "reply": string, "products": Product[] }.
-              - For other questions: { "message": string } answering the question concisely. Do NOT include products.`
+              - For generate/modify product bundle: { "reply": string, "products": Product[] }.
+              - For other questions: { "reply": string } answering the question concisely. Do NOT include products.`
           },
           ...chatContext,
           { role: "user", content: message },

@@ -50,7 +50,7 @@ export default function Page() {
   return (
     <main className="min-h-[100dvh] p-6">
       <ProductsProvider>
-        {switchPage ? <Home1 /> : <Home2 />}
+        {switchPage ? <Home2 /> : <Home1 />}
 
       <button onClick={() => setSwitchPage(!switchPage)}>Switch Page</button>
       </ProductsProvider>
