@@ -20,11 +20,8 @@ function uniqueId(prefix = ""): string {
 }
 
 const CATEGORIES = [
-  { cat: "Apparel", sub: ["Tops", "Bottoms", "Outerwear", "Activewear", "Underwear"] },
-  { cat: "Footwear", sub: ["Sneakers", "Boots", "Sandals", "Dress Shoes"] },
-  { cat: "Accessories", sub: ["Bags", "Belts", "Hats", "Scarves", "Jewelry"] },
-  { cat: "Home", sub: ["Decor", "Kitchen", "Bedding", "Bath"] },
-  { cat: "Electronics", sub: ["Audio", "Smart Home", "Wearables", "Mobile"] },
+  { cat: "Apparel", sub: ["Tops", "Bottoms", "Outerwear",] },
+  { cat: "Footwear", sub: ["Sneakers",] },
 ];
 
 const BRANDS = [
@@ -72,7 +69,51 @@ function placeholderImage(id: string): string {
   return `https://picsum.photos/seed/${encodeURIComponent(id)}/300/300`;
 }
 
-export function generateCatalogProduct(index?: number): CatalogProduct {
+
+
+
+const PRODUCT_IMAGES: Record<string, string[]> = {
+  Sneakers: [
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=1200&q=80"
+  ],
+  Tops: [
+    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=1364&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "https://images.unsplash.com/photo-1622445275463-afa2ab738c34?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8VCUyMHNoaXJ0fGVufDB8fDB8fHwy"
+  ],
+  Bottoms: [
+    "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cGFudHN8ZW58MHx8MHx8fDI%3D",
+    "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cGFudHN8ZW58MHx8MHx8fDI%3D",
+    "https://images.unsplash.com/photo-1624378441864-6eda7eac51cb?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHBhbnRzfGVufDB8fDB8fHwy"
+  ],
+  Outerwear: [
+    "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8amFja2V0c3xlbnwwfHwwfHx8Mg%3D%3D",
+    "https://images.unsplash.com/photo-1578948856697-db91d246b7b1?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTl8fGphY2tldHN8ZW58MHx8MHx8fDI%3D",
+    "https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGphY2tldHN8ZW58MHx8MHx8fDI%3D"
+  ],
+};
+
+
+
+// Ensure we do not reuse the exact same URL across generated products
+const usedImageUrls = new Set<string>();
+function withUniqueParam(url: string, unique: string): string {
+  return url.includes("?") ? `${url}&u=${unique}` : `${url}?u=${unique}`;
+}
+function pickUniqueImageForSub(sub: string, fallbackId: string): string | undefined {
+  const pool = PRODUCT_IMAGES[sub] ?? [];
+  for (const u of pool) {
+    if (!usedImageUrls.has(u)) {
+      usedImageUrls.add(u);
+      return u;
+    }
+  }
+  return undefined;
+}
+
+export function generateCatalogProduct(index?: number): CatalogProduct | undefined {
   const id = uniqueId(String(index ?? ""));
   const cat = pickRandom(CATEGORIES);
   const sub = pickRandom(cat.sub);
@@ -87,13 +128,20 @@ export function generateCatalogProduct(index?: number): CatalogProduct {
 
   const name = `${brand} ${style} ${sub}`;
 
+  const productImage = pickUniqueImageForSub(sub, id);
+
+
+  if (!productImage) {
+    return undefined;
+  }
+
   const product: CatalogProduct = {
     "product-id": id,
     "product-name": name,
     "product-description": `A ${style.toLowerCase()} ${sub.toLowerCase()} by ${brand} in ${color}.` ,
     "product-price": randomPrice(10, 100),
     "product-quantity": randomInt(0, 250),
-    "product-image": "https://picsum.photos/200/300",
+    "product-image": productImage,
     "product-category": cat.cat,
     "product-subcategory": sub,
     "product-brand": brand,
@@ -119,7 +167,10 @@ export function generateCatalog(count: number): CatalogProduct[] {
   const n = Math.max(1, Math.min(count, 1000));
   const results: CatalogProduct[] = [];
   for (let i = 0; i < n; i++) {
-    results.push(generateCatalogProduct(i));
+    const product = generateCatalogProduct(i);
+    if (product) {
+      results.push(product);
+    }
   }
   return results;
 } 
