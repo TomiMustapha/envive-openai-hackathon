@@ -22,9 +22,10 @@ export default function Home1() {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
-    const data = fetcher.data
+    const data = fetcher.data as ChatResponse | undefined;
     if (fetcher.state === "idle" && data) {
-      setMessages((prev) => [...prev, { role: "assistant", content: data.content}]);
+      const payload = JSON.stringify({ reply: data.reply ?? "", products: data.products });
+      setMessages((prev) => [...prev, { role: "assistant", content: payload }]);
     }
     // if (fetcher.state === "idle" && data?.products) {
     //   setProductsContext(data.products as CatalogProduct[]);
@@ -32,9 +33,14 @@ export default function Home1() {
     // }
     if (fetcher.state === "idle" && data) {
       console.log(data);
-      const content = JSON.parse(data.content ?? "{}")
-      if (content && content.html) {
-        setEmailHtml(content.html);
+      // Try to parse reply as JSON to extract html
+      try {
+        const content = JSON.parse(data.reply ?? "{}");
+        if (content && content.html) {
+          setEmailHtml(content.html);
+        }
+      } catch {
+        // Reply is not JSON, that's fine
       }
     }
   }, [fetcher.state, fetcher.data, setProductsContext]);
