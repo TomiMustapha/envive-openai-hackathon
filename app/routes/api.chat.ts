@@ -176,11 +176,12 @@ export async function action({ request }: Route.ActionArgs) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-5",
           messages,
           tools,
           tool_choice: "auto",
-          response_format: { type: "json_object" }
+          response_format: { type: "json_object" },
+          reasoning_effort: "minimal"
         }),
       });
 

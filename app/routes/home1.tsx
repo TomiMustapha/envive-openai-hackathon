@@ -33,14 +33,19 @@ export default function Home1() {
     // }
     if (fetcher.state === "idle" && data) {
       console.log(data);
-      // Try to parse reply as JSON to extract html
-      try {
-        const content = JSON.parse(data.reply ?? "{}");
-        if (content && content.html) {
-          setEmailHtml(content.html);
+      // Prefer top-level html if present
+      if ((data as any).html) {
+        setEmailHtml((data as any).html as string);
+      } else {
+        // Try to parse reply as JSON to extract html
+        try {
+          const content = JSON.parse(data.reply ?? "{}");
+          if (content && content.html) {
+            setEmailHtml(content.html);
+          }
+        } catch {
+          // Reply is not JSON, that's fine
         }
-      } catch {
-        // Reply is not JSON, that's fine
       }
     }
   }, [fetcher.state, fetcher.data, setProductsContext]);
